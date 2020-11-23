@@ -9,7 +9,7 @@ import java.awt.Toolkit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Function;
-import java.util.stream.Stream;
+import java.util.Collections;
 import java.util.Map;
 import java.util.HashMap;
 
@@ -19,8 +19,6 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
-
-import static java.util.stream.Collectors.toList;
 
 /**
  * Modify this small program adding new filters.
@@ -40,31 +38,24 @@ import static java.util.stream.Collectors.toList;
 public final class LambdaFilter extends JFrame {
 
     private static final long serialVersionUID = 1760990730218643730L;
+
     private static final char LINE_SEPARATOR = '\n';
     private static final char WORD_SEPARATOR = ' ';
 
-    private static Stream<String> convertToStringStream(final String s, final List<Character> separator) {
+    private static List<String> convertToStringStream(String s, final List<Character> separator) {
         List<String> list = new ArrayList<>();
         String word = "";
+        s = s.concat(Character.toString(LINE_SEPARATOR));
+
         for (Character c : s.toCharArray()) {
-            if (separator.contains(c)) {
-                word += c.toString();
+            if (!separator.contains(c)) {
+                word = word.concat(Character.toString(c));
             } else {
                 list.add(word);
                 word = "";
             }
         }
-        return list.stream();
-    }
-
-    private static Stream<Character> convertToCharStream(final String s, final List<Character> ignore) {
-        List<Character> list = new ArrayList<>();
-        for (Character c : s.toCharArray()) {
-            if (!ignore.contains(c)) {
-                list.add(c);
-            }
-        }
-        return list.stream();
+        return list;
     }
 
     private enum Command {
@@ -77,14 +68,14 @@ public final class LambdaFilter extends JFrame {
             return lower;
         }),
 
-        COUNT("Count", s -> Integer.toString((int) convertToCharStream(s, List.of(LINE_SEPARATOR)).count())),
-
-        COUNT_LINE("Count line", s -> Integer.toString((int) convertToStringStream(s, List.of(LINE_SEPARATOR)).count())),
+        COUNT("Count", s -> Integer.toString(convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR)).size())),
 
         ORDER_ALPHABETICAL("Ordered alphabetical", s -> {
             String r = "";
-            for (String c : convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR)).sorted(String::compareTo).collect(toList())) {
-                r += c + LINE_SEPARATOR;
+            List<String> l = convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR));
+            Collections.sort(l);
+            for (String itm : l) {
+                r += itm + LINE_SEPARATOR;
             }
             return r;
         }),
@@ -92,8 +83,10 @@ public final class LambdaFilter extends JFrame {
         COUNTING_WORD("Counting word", s -> {
             String r = "";
             Map<String, Integer> mappa = new HashMap<>();
-            convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR)).forEach(d -> System.out.println(d + "."));
-            for (String c : convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR)).sorted(String::compareTo).collect(toList())) {
+            List<String> l = convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR));
+            Collections.sort(l);
+
+            for (String c : l) {
                 if (mappa.keySet().contains(c)) {
                     int v = mappa.get(c);
                     v++;
@@ -104,7 +97,7 @@ public final class LambdaFilter extends JFrame {
             }
 
             for (var v : mappa.entrySet()) {
-                r = r.concat(v.getKey() + " -> " + v.getValue());
+                r = r.concat(v.getKey() + " -> " + v.getValue() + LINE_SEPARATOR);
             }
             return r;
         });
