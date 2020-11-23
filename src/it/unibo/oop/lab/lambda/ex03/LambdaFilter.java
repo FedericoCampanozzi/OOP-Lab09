@@ -6,7 +6,12 @@ import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.LayoutManager;
 import java.awt.Toolkit;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.function.Function;
+import java.util.stream.Stream;
+import java.util.Map;
+import java.util.HashMap;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -14,6 +19,8 @@ import javax.swing.JComboBox;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
 import javax.swing.JTextArea;
+
+import static java.util.stream.Collectors.toList;
 
 /**
  * Modify this small program adding new filters.
@@ -33,10 +40,73 @@ import javax.swing.JTextArea;
 public final class LambdaFilter extends JFrame {
 
     private static final long serialVersionUID = 1760990730218643730L;
+    private static final char LINE_SEPARATOR = '\n';
+    private static final char WORD_SEPARATOR = ' ';
+
+    private static Stream<String> convertToStringStream(final String s, final List<Character> separator) {
+        List<String> list = new ArrayList<>();
+        String word = "";
+        for (Character c : s.toCharArray()) {
+            if (separator.contains(c)) {
+                word += c.toString();
+            } else {
+                list.add(word);
+                word = "";
+            }
+        }
+        return list.stream();
+    }
+
+    private static Stream<Character> convertToCharStream(final String s, final List<Character> ignore) {
+        List<Character> list = new ArrayList<>();
+        for (Character c : s.toCharArray()) {
+            if (!ignore.contains(c)) {
+                list.add(c);
+            }
+        }
+        return list.stream();
+    }
 
     private enum Command {
         IDENTITY("No modifications", Function.identity()),
         TO_LOWER("To lower", s -> {
+            String lower = "";
+            for (Character c : s.toCharArray()) {
+                lower += Character.toLowerCase(c);
+            }
+            return lower;
+        }),
+
+        COUNT("Count", s -> Integer.toString((int) convertToCharStream(s, List.of(LINE_SEPARATOR)).count())),
+
+        COUNT_LINE("Count line", s -> Integer.toString((int) convertToStringStream(s, List.of(LINE_SEPARATOR)).count())),
+
+        ORDER_ALPHABETICAL("Ordered alphabetical", s -> {
+            String r = "";
+            for (String c : convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR)).sorted(String::compareTo).collect(toList())) {
+                r += c + LINE_SEPARATOR;
+            }
+            return r;
+        }),
+
+        COUNTING_WORD("Counting word", s -> {
+            String r = "";
+            Map<String, Integer> mappa = new HashMap<>();
+            convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR)).forEach(d -> System.out.println(d + "."));
+            for (String c : convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR)).sorted(String::compareTo).collect(toList())) {
+                if (mappa.keySet().contains(c)) {
+                    int v = mappa.get(c);
+                    v++;
+                    mappa.put(c, v);
+                } else {
+                    mappa.put(c, 1);
+                }
+            }
+
+            for (var v : mappa.entrySet()) {
+                r = r.concat(v.getKey() + " -> " + v.getValue());
+            }
+            return r;
         });
 
         private final String commandName;
