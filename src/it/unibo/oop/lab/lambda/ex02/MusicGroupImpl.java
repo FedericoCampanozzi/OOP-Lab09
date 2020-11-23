@@ -31,42 +31,50 @@ public final class MusicGroupImpl implements MusicGroup {
 
     @Override
     public Stream<String> orderedSongNames() {
-        return null;
+        return this.songs.stream().map(Song::getSongName).sorted();
     }
 
     @Override
     public Stream<String> albumNames() {
-        return null;
+        return albums.keySet().stream();
     }
 
     @Override
     public Stream<String> albumInYear(final int year) {
-        return null;
+        return this.albums.entrySet().stream().filter(a -> a.getValue() == year).map(Map.Entry::getKey);
+        //return this.albums.keySet().stream().filter(key -> this.albums.get(key) == year);
     }
 
     @Override
     public int countSongs(final String albumName) {
-        return -1;
+        return (int) this.songs.stream().filter(s -> s.getAlbumName().isPresent()).filter(s -> s.getAlbumName().equals(Optional.of(albumName))).count();
     }
 
     @Override
     public int countSongsInNoAlbum() {
-        return -1;
+        return (int) this.songs.stream().filter(s -> !s.getAlbumName().isPresent()).count();
     }
 
     @Override
     public OptionalDouble averageDurationOfSongs(final String albumName) {
-        return null;
+        OptionalDouble sommaDuration = OptionalDouble.of((double) this.songs.stream()
+        .filter(s -> s.getAlbumName().equals(Optional.of(albumName)))
+        .map(s -> s.getDuration())
+        .reduce((a, b) -> a + b)
+        .get());
+
+        OptionalDouble count = OptionalDouble.of((double) countSongs(albumName));
+        return  OptionalDouble.of(sommaDuration.getAsDouble() / count.getAsDouble());
     }
 
     @Override
     public Optional<String> longestSong() {
-        return null;
+        return this.songs.stream().max((s1, s2) -> Double.compare(s1.getDuration(), s2.getDuration())).map(Song::getSongName);
     }
 
     @Override
     public Optional<String> longestAlbum() {
-        return null;
+        return this.albumNames().max((a1, a2) -> Double.compare(this.albums.get(a1), this.albums.get(a2)));
     }
 
     private static final class Song {
