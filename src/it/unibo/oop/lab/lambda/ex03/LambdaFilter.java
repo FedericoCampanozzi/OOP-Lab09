@@ -68,7 +68,16 @@ public final class LambdaFilter extends JFrame {
             return lower;
         }),
 
-        COUNT("Count", s -> Integer.toString(convertToStringStream(s, List.of(LINE_SEPARATOR, WORD_SEPARATOR)).size())),
+        COUNT("Count", s -> {
+            int count = 0;
+            final List<Character> l = List.of(LINE_SEPARATOR, WORD_SEPARATOR);
+            for (final Character c : s.toCharArray()) {
+                if (!l.contains(c)) {
+                    count++;
+                }
+            }
+            return Integer.toString(count);
+        }),
 
         ORDER_ALPHABETICAL("Ordered alphabetical", s -> {
             String r = "";
