@@ -23,7 +23,7 @@ import java.util.stream.IntStream;
  *
  */
 public final class LambdaUtilities {
-
+ 
     private LambdaUtilities() {
     }
 
